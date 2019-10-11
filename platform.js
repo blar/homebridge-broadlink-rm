@@ -65,6 +65,22 @@ const BroadlinkRMPlatform = class extends HomebridgePlatform {
 
       if (!classTypes[accessory.type]) throw new Error(`homebridge-broadlink-rm doesn't support accessories of type "${accessory.type}".`);
 
+      ["on", "off"].forEach((state) => {
+        if(!Array.isArray(accessory.data[state])) {
+          return;
+        }
+        accessory.data[state] = accessory.data[state].map((step) => {
+          if(step.code === undefined) {
+            return step;
+          }
+          if(config.codes[step] === undefined) {
+          	return step;
+          }
+          step.data = config.codes[step];
+          return step;
+        });
+      });
+
       const homeKitAccessory = new classTypes[accessory.type](log, accessory);
 
       if (classTypes[accessory.type] === classTypes.tv) {
@@ -89,7 +105,7 @@ const BroadlinkRMPlatform = class extends HomebridgePlatform {
         log(`**************************************************************************************************************`);
         log('');
       }
-    } 
+    }
   }
 
   discoverBroadlinkDevices () {
@@ -102,16 +118,16 @@ const BroadlinkRMPlatform = class extends HomebridgePlatform {
 
       return;
     }
-    
+
     discoverDevices(false, log, debug);
 
     log(`\x1b[35m[INFO]\x1b[0m Automatic Broadlink RM device discovery has been disabled as the "hosts" option has been set.`)
 
     assert.isArray(hosts, `\x1b[31m[CONFIG ERROR] \x1b[33mhosts\x1b[0m should be an array of objects.`)
-      
+
     hosts.forEach((host) => {
       assert.isObject(host, `\x1b[31m[CONFIG ERROR] \x1b[0m Each item in the \x1b[33mhosts\x1b[0m array should be an object.`)
-      
+
       const { address, isRFSupported, mac } = host;
       assert(address, `\x1b[31m[CONFIG ERROR] \x1b[0m Each object in the \x1b[33mhosts\x1b[0m option should contain a value for \x1b[33maddress\x1b[0m (e.g. "192.168.1.23").`)
       assert(mac, `\x1b[31m[CONFIG ERROR] \x1b[0m Each object in the \x1b[33mhosts\x1b[0m option should contain a unique value for \x1b[33mmac\x1b[0m (e.g. "34:ea:34:e7:d7:28").`)
